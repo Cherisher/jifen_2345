@@ -71,8 +71,63 @@ def checkTime(url):
         print 'time success'
         return True
 
-def set2345Cookie(url_str):     
-    global cookie    
+
+def doSignature(opener):
+    url = 'http://jifen.2345.com/jifen/every_day_signature_new.php'
+    data = "sign_token="
+
+    code = '145995840020811342'
+    """
+        http://jifen.2345.com/index.php
+        取应答包中的, 待确认
+        var code = "145995840020811342";
+    """
+    m2 = hashlib.md5()   
+    m2.update(uid+ code)   
+    data += m2.hexdigest()  
+
+    req = urllib2.Request(url)
+    tmp = ""
+    for item in cookie:
+        tmp += item.name+ "=" + item.value+"; "
+
+    print 'Cookie:',tmp
+    req.add_header('Cookie', tmp)     
+    req.add_header('Connection', 'keep-alive')
+    req.add_header('Accept-Encoding', 'gzip, deflate, sdch')
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36')
+    req.add_header('Accept-Language', 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2')
+    req.add_header('DNT', '1')
+    req.add_header('Referer', 'http://jifen.2345.com/index.php')
+    req.add_header('Origin', 'http://jifen.2345.com')
+    req.add_header('Content-Type','application/x-www-form-urlencoded; charset=UTF-8')
+    req.add_header('X-Requested-With', 'XMLHttpRequest')
+    req.add_header('Accept', '*/*')
+    req.add_header('Content-Length', len(data))
+    
+    req.add_data(data)
+    print 'doSignature'
+    response = urllib2.urlopen(req);
+
+    print response.read()
+
+    
+def set2345Cookie(url_str):
+    """
+        HTTP/1.1 302 Found
+        Date: Thu, 07 Apr 2016 02:24:54 GMT
+        Server: Apache
+        P3P: CP='NOI ADM DEV PSAi COM NAV OUR OTRo STP IND DEM'
+        Set-Cookie: I=i%3D23741766%26u%3D24311802%26n%3D%25B0%25B5%25D3%25B0%25D6%25AE%25D3%25E3%26t%3D1459995894.51632200%26s%3D71ffe08c34ccef8afca5655a8f8b091b%26v%3D1.0%26ismobile%3D0; expires=Thu, 07-Apr-2016 04:24:54 GMT; path=/; domain=.2345.cn; httponly
+        Set-Cookie: uid=24311802; expires=Thu, 07-Apr-2016 04:24:54 GMT; path=/; domain=.2345.cn
+        Location: http://jifen.2345.com
+        Cache-Control: max-age=0
+        Expires: Thu, 07 Apr 2016 02:24:54 GMT
+        Vary: Accept-Encoding
+        Content-Length: 0
+        Connection: close
+        Content-Type: text/html; charset=gbk
+    """
     send_headers = {       
         'Connection': 'keep-alive',
         'Accept-Encoding': 'gzip, deflate, sdch',
@@ -82,19 +137,19 @@ def set2345Cookie(url_str):
         'DNT': '1',
         'Referer': 'http://jifen.2345.com/'}
     
-    req = urllib2.Request(url_str, headers=send_headers)
-    
-    cookie = cookielib.CookieJar()
-    handler=urllib2.HTTPCookieProcessor(cookie)
-    opener = urllib2.build_opener(handler, HttpRedirect_Handler)
+    req = urllib2.Request(url_str, headers=send_headers)    
+   
+    opener = urllib2.build_opener(HttpRedirect_Handler)
     
     response = opener.open(req)
-    print response.read()
     
-    for item in cookie:
-        print 'Name = '+item.name
-        print 'Value = '+item.value
+    data = response.read()
+    
+    # import re    
+    # print re.findall(r'var code = "\d+"', data)
+   
 
+    doSignature(opener)
         
 def checkLoginResponse(response):
     errmsg ={1: '验证码输入错误，请重新输入',
@@ -133,7 +188,12 @@ def doLogin(forward, url, username, password):
      	   imgCodeStr = "&pImgCode=" + $("#pImgCode").val() + "";
         }
     """
+    global cookie
+    global uid
 
+    cookie = cookielib.CookieJar()
+    handler=urllib2.HTTPCookieProcessor(cookie)
+    
     m2 = hashlib.md5()   
     m2.update(password)   
     md5passwd = m2.hexdigest()   
@@ -154,9 +214,22 @@ def doLogin(forward, url, username, password):
         'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2'
      }
     req = urllib2.Request(url, headers=send_headers)
-
     req.add_data(data)
-    response = urllib2.urlopen(req).read()
+    
+    opener = urllib2.build_opener(handler)
+    
+    response = opener.open(req).read()
+
+
+    #print cookie
+    for item in cookie:
+        print 'Name = '+item.name
+        print 'Value = '+item.value
+        if item.name == 'uid':
+            uid = item.value
+            
+    print "uid:", uid
+
     checkLoginResponse(response)
     
     
@@ -165,8 +238,8 @@ if __name__ == '__main__':
     url = "/jifenLogin.php"
     url =forward + url
     
-    username = "xxxxxxx" # 用户名
-    password = 'xxxxxx' # 密码
+    username = "xxxxx" # 用户名
+    password = 'xxxxx' # 密码
  
     if checkNeedVirCode(url, username) == True and checkTime(url) == True:
         print 'Do Login'
