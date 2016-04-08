@@ -1,3 +1,4 @@
+#!/bin/env python
 # -*- coding: utf8 -*-
 """
 Auth: Candoit
@@ -29,13 +30,14 @@ def checkNeedVirCode(url, username):
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'DNT': '1',
         'Referer': 'http://jifen.2345.com/',
-        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Encoding': 'xzip, deflate',
         'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2'
          }
     req = urllib2.Request(url, headers=send_headers)
     
     req.add_data(data)
     response = urllib2.urlopen(req).read()
+    print response
     if int(response) == 0:
         print "noNeedCaptcha"
         return True
@@ -57,7 +59,7 @@ def checkTime(url):
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'DNT': '1',
         'Referer': 'http://jifen.2345.com/',
-        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Encoding': 'xzip, deflate',
         'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2'
      }
     req = urllib2.Request(url, headers=send_headers)
@@ -76,11 +78,13 @@ def doSignature(opener):
     url = 'http://jifen.2345.com/jifen/every_day_signature_new.php'
     data = "sign_token="
 
-    code = '145995840020811342'
+    currtime = time.time()
+    midnight = currtime - (currtime % 86400) + time.timezone # 当天零点的时间
+    code = str(int(midnight)) + uid[::-1] # uid 反转
+   
     """
-        http://jifen.2345.com/index.php
-        取应答包中的, 待确认
-        var code = "145995840020811342";
+    code 算法：
+    当天零点的时间 + uid字符串反转
     """
     m2 = hashlib.md5()   
     m2.update(uid+ code)   
@@ -94,7 +98,7 @@ def doSignature(opener):
     print 'Cookie:',tmp
     req.add_header('Cookie', tmp)     
     req.add_header('Connection', 'keep-alive')
-    req.add_header('Accept-Encoding', 'gzip, deflate, sdch')
+    req.add_header('Accept-Encoding', 'xzip, deflate, sdch')
     req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36')
     req.add_header('Accept-Language', 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2')
     req.add_header('DNT', '1')
@@ -130,7 +134,7 @@ def set2345Cookie(url_str):
     """
     send_headers = {       
         'Connection': 'keep-alive',
-        'Accept-Encoding': 'gzip, deflate, sdch',
+        'Accept-Encoding': 'xzip, deflate, sdch',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36',
         'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2',
         'Accept': 'image/webp,image/*,*/*;q=0.8',
@@ -145,8 +149,9 @@ def set2345Cookie(url_str):
     
     data = response.read()
     
-    # import re    
-    # print re.findall(r'var code = "\d+"', data)
+    import re    
+    #print re.findall(r'var code = "\d+"', data)
+    print re.findall(r'var code', data)
    
 
     doSignature(opener)
@@ -210,7 +215,7 @@ def doLogin(forward, url, username, password):
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'DNT': '1',
         'Referer': 'http://jifen.2345.com/',
-        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Encoding': 'xzip, deflate',
         'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2'
      }
     req = urllib2.Request(url, headers=send_headers)
@@ -238,9 +243,15 @@ if __name__ == '__main__':
     url = "/jifenLogin.php"
     url =forward + url
     
-    username = "xxxxx" # 用户名
-    password = 'xxxxx' # 密码
- 
+    username = "" # 用户名
+    password = "" # 密码
+
+    if len(username) == 0 or len(password) == 0:
+        print "!!!Please input you username and password!!!"
+        sys.exit(1)
+
     if checkNeedVirCode(url, username) == True and checkTime(url) == True:
         print 'Do Login'
         doLogin(forward, url, username, password)
+    else
+        sys.exit(1)
