@@ -14,7 +14,7 @@ import hashlib
 
 class HttpRedirect_Handler(urllib2.HTTPRedirectHandler):
     def http_error_302(self, req, fp, code, msg, headers):
-        return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers) 
+        return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
 
 def checkNeedVirCode(url, username):
     data="cmd=isNeedCaptcha&showWay=ajax&username=" + username
@@ -34,7 +34,7 @@ def checkNeedVirCode(url, username):
         'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2'
          }
     req = urllib2.Request(url, headers=send_headers)
-    
+
     req.add_data(data)
     response = urllib2.urlopen(req).read()
     print response
@@ -81,14 +81,14 @@ def doSignature(opener):
     currtime = time.time()
     midnight = currtime - (currtime % 86400) + time.timezone # 当天零点的时间
     code = str(int(midnight)) + uid[::-1] # uid 反转
-   
+
     """
     code 算法：
     当天零点的时间 + uid字符串反转
     """
-    m2 = hashlib.md5()   
-    m2.update(uid+ code)   
-    data += m2.hexdigest()  
+    m2 = hashlib.md5()
+    m2.update(uid+ code)
+    data += m2.hexdigest()
 
     req = urllib2.Request(url)
     tmp = ""
@@ -96,7 +96,7 @@ def doSignature(opener):
         tmp += item.name+ "=" + item.value+"; "
 
     print 'Cookie:',tmp
-    req.add_header('Cookie', tmp)     
+    req.add_header('Cookie', tmp)
     req.add_header('Connection', 'keep-alive')
     req.add_header('Accept-Encoding', 'xzip, deflate, sdch')
     req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36')
@@ -108,14 +108,14 @@ def doSignature(opener):
     req.add_header('X-Requested-With', 'XMLHttpRequest')
     req.add_header('Accept', '*/*')
     req.add_header('Content-Length', len(data))
-    
+
     req.add_data(data)
     print 'doSignature'
     response = urllib2.urlopen(req);
 
     print response.read()
 
-    
+
 def set2345Cookie(url_str):
     """
         HTTP/1.1 302 Found
@@ -132,7 +132,7 @@ def set2345Cookie(url_str):
         Connection: close
         Content-Type: text/html; charset=gbk
     """
-    send_headers = {       
+    send_headers = {
         'Connection': 'keep-alive',
         'Accept-Encoding': 'xzip, deflate, sdch',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36',
@@ -140,22 +140,17 @@ def set2345Cookie(url_str):
         'Accept': 'image/webp,image/*,*/*;q=0.8',
         'DNT': '1',
         'Referer': 'http://jifen.2345.com/'}
-    
-    req = urllib2.Request(url_str, headers=send_headers)    
-   
+
+    req = urllib2.Request(url_str, headers=send_headers)
+
     opener = urllib2.build_opener(HttpRedirect_Handler)
-    
+
     response = opener.open(req)
-    
+
     data = response.read()
-    
-    import re    
-    #print re.findall(r'var code = "\d+"', data)
-    print re.findall(r'var code', data)
-   
 
     doSignature(opener)
-        
+
 def checkLoginResponse(response):
     errmsg ={1: '验证码输入错误，请重新输入',
            4:  '2345帐号不存在或密码错误!',
@@ -171,22 +166,22 @@ def checkLoginResponse(response):
 
         if url_str.find('bbs.2345.cn/api/passport.php?action=login&cookieTime') >= 0:
             print 'setCookie'
-            set2345Cookie(url_str) 
+            set2345Cookie(url_str)
         else:
             print url_str
     elif op == 2 or op == 3 or op == 5:
         url_str = redata[1].replace('\/', '/').strip("\"")
         print url_str
-        
+
     else:
         print errmsg[op]
-   
+
 def doLogin(forward, url, username, password):
     vTime ="7776000"
     weakpass="0"
     remember = '0'
     imgCodeStr=''
-    
+
     """
     ·# 验证码处理
      if(checkCookie('lnc') == 1) {
@@ -198,11 +193,11 @@ def doLogin(forward, url, username, password):
 
     cookie = cookielib.CookieJar()
     handler=urllib2.HTTPCookieProcessor(cookie)
-    
-    m2 = hashlib.md5()   
-    m2.update(password)   
-    md5passwd = m2.hexdigest()   
-    
+
+    m2 = hashlib.md5()
+    m2.update(password)
+    md5passwd = m2.hexdigest()
+
     data = "cmd=login&username=" + username + "&password=" + md5passwd + "&remember=" + remember + "&forward=" + forward + "&showWay=ajax"+imgCodeStr+"&weakpass="+weakpass+"&t=" + str(random.random())
     send_headers = {
         'Host': 'jifen.2345.com',
@@ -220,9 +215,9 @@ def doLogin(forward, url, username, password):
      }
     req = urllib2.Request(url, headers=send_headers)
     req.add_data(data)
-    
+
     opener = urllib2.build_opener(handler)
-    
+
     response = opener.open(req).read()
 
 
@@ -232,17 +227,17 @@ def doLogin(forward, url, username, password):
         print 'Value = '+item.value
         if item.name == 'uid':
             uid = item.value
-            
+
     print "uid:", uid
 
     checkLoginResponse(response)
-    
-    
+
+
 if __name__ == '__main__':
     forward = 'http://jifen.2345.com'
     url = "/jifenLogin.php"
     url =forward + url
-    
+
     username = "" # 用户名
     password = "" # 密码
 
@@ -253,5 +248,5 @@ if __name__ == '__main__':
     if checkNeedVirCode(url, username) == True and checkTime(url) == True:
         print 'Do Login'
         doLogin(forward, url, username, password)
-    else
+    else:
         sys.exit(1)
