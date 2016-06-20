@@ -74,8 +74,8 @@ def checkTime(url):
         return True
 
 
-def doSignature(opener):
-    url = 'http://jifen.2345.com/jifen/every_day_signature_new.php'
+def doSignature(opener, hostname):
+    url = 'http://'+hostname+'/jifen/every_day_signature_new.php'
     data = "sign_token="
 
     currtime = time.time()
@@ -102,8 +102,8 @@ def doSignature(opener):
     req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36')
     req.add_header('Accept-Language', 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2')
     req.add_header('DNT', '1')
-    req.add_header('Referer', 'http://jifen.2345.com/index.php')
-    req.add_header('Origin', 'http://jifen.2345.com')
+    req.add_header('Referer', 'http://'+hostname+'/index.php')
+    req.add_header('Origin', 'http://'+hostname)
     req.add_header('Content-Type','application/x-www-form-urlencoded; charset=UTF-8')
     req.add_header('X-Requested-With', 'XMLHttpRequest')
     req.add_header('Accept', '*/*')
@@ -149,7 +149,8 @@ def set2345Cookie(url_str):
 
     data = response.read()
 
-    doSignature(opener)
+    doSignature(opener, 'jifen.2345.com')
+    doSignature(opener, 'shouji.2345.com')
 
 def checkLoginResponse(response):
     errmsg ={1: '验证码输入错误，请重新输入',
